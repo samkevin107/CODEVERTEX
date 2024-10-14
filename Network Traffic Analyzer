@@ -1,0 +1,8 @@
+from scapy.all import sniff
+
+# Function to process each packet
+def process_packet(packet):
+    packet.show()  # Print details of the captured packet
+
+# Use the Wi-Fi interface found from 'ipconfig'
+sniff(iface="Wi-Fi", prn=process_packet, count=10)
