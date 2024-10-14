@@ -1,0 +1,58 @@
+# Install the pycryptodome library
+!pip install pycryptodome
+
+# Import necessary libraries
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from google.colab import files  # For file uploads and downloads
+import os
+
+# Function to encrypt a file
+def encrypt_file(file_name, key):
+    cipher = AES.new(key, AES.MODE_EAX)  # Using AES encryption in EAX mode
+    with open(file_name, 'rb') as f:
+        file_data = f.read()  # Read file content
+
+    ciphertext, tag = cipher.encrypt_and_digest(file_data)  # Encrypt and get the tag
+
+    enc_file_name = file_name + ".enc"
+    with open(enc_file_name, 'wb') as f:
+        for x in (cipher.nonce, tag, ciphertext):  # Write nonce, tag, and ciphertext
+            f.write(x)
+    print(f"File {file_name} encrypted successfully!")
+
+    return enc_file_name  # Return encrypted file name
+
+# Function to decrypt a file
+def decrypt_file(file_name, key):
+    with open(file_name, 'rb') as f:
+        nonce, tag, ciphertext = [f.read(x) for x in (16, 16, -1)]  # Read nonce, tag, ciphertext
+
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
+    data = cipher.decrypt_and_verify(ciphertext, tag)  # Decrypt and verify with tag
+
+    dec_file_name = file_name[:-4]  # Remove the ".enc" extension
+    with open(dec_file_name, 'wb') as f:
+        f.write(data)
+    print(f"File {file_name} decrypted successfully!")
+
+    return dec_file_name  # Return decrypted file name
+
+# Step 1: Upload the file to encrypt
+uploaded = files.upload()  # Upload a file from your system
+file_name = next(iter(uploaded))  # Get the name of the uploaded file
+
+# Step 2: Generate an encryption key
+key = get_random_bytes(16)  # AES key should be either 16, 24, or 32 bytes
+
+# Step 3: Encrypt the uploaded file
+enc_file = encrypt_file(file_name, key)
+
+# Step 4: Download the encrypted file
+files.download(enc_file)  # Download the encrypted file to your system
+
+# Step 5: Decrypt the file (Optional - if you want to test decryption)
+dec_file = decrypt_file(enc_file, key)
+
+# Step 6: Download the decrypted file
+files.download(dec_file)  # Download the decrypted file to your system
